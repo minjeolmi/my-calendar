@@ -16,7 +16,6 @@ export default async function handler(req, res) {
     });
     const data = await response.json();
 
-    // 🚨 노션이 에러를 반환했을 경우, 멈추지 말고 노션의 진짜 에러 메시지를 화면에 출력
     if (data.object === 'error') {
       return res.status(data.status).json({ 
         error: "노션 API가 에러를 뱉었습니다", 
@@ -31,12 +30,30 @@ export default async function handler(req, res) {
 
     const posterData = {};
     data.results.forEach(page => {
-      const date = page.properties['시청일']?.date?.start;
+      const startDateStr = page.properties['시청일']?.date?.start;
+      const endDateStr = page.properties['시청일']?.date?.end;
       const files = page.properties['포스터']?.files;
       const posterUrl = files?.[0]?.file?.url || files?.[0]?.external?.url;
 
-      if (date && posterUrl) {
-        posterData[date] = posterUrl;
+      if (startDateStr && posterUrl) {
+        if (!endDateStr) {
+          // 종료일이 없으면 시작일 하루만 등록
+          posterData[startDateStr] = posterUrl;
+        } else {
+          // 종료일이 있으면 시작일부터 종료일까지 루프 돌면서 날짜 다 채우기
+          let current = new Date(startDateStr);
+          const end = new Date(endDateStr);
+          
+          while (current <= end) {
+            const yyyy = current.getFullYear();
+            const mm = String(current.getMonth() + 1).padStart(2, '0');
+            const dd = String(current.getDate()).padStart(2, '0');
+            const dateKey = `${yyyy}-${mm}-${dd}`;
+            
+            posterData[dateKey] = posterUrl;
+            current.setDate(current.getDate() + 1);
+          }
+        }
       }
     });
 
