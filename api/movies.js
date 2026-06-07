@@ -16,6 +16,19 @@ export default async function handler(req, res) {
     });
     const data = await response.json();
 
+    // 🚨 노션이 에러를 반환했을 경우, 멈추지 말고 노션의 진짜 에러 메시지를 화면에 출력
+    if (data.object === 'error') {
+      return res.status(data.status).json({ 
+        error: "노션 API가 에러를 뱉었습니다", 
+        code: data.code, 
+        message: data.message 
+      });
+    }
+
+    if (!data.results) {
+      return res.status(500).json({ error: "노션에서 results 데이터를 받지 못했습니다.", rawData: data });
+    }
+
     const posterData = {};
     data.results.forEach(page => {
       const date = page.properties['시청일']?.date?.start;
