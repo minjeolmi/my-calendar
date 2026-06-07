@@ -206,6 +206,29 @@ body {
   border-radius: 4px !important;
   margin: 0 !important;
 }
+    /* --- 스크롤바 얇고 어둡게 커스텀 --- */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #191919;
+}
+
+/* 크롬, 사파리, 웨일용 스타일 */
+::-webkit-scrollbar {
+  width: 5px; /* 스크롤바 두께를 아주 얇게 */
+}
+
+::-webkit-scrollbar-track {
+  background: #191919; /* 달력 배경색과 통일 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444; /* 튀지 않는 어두운 회색 */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
 </style>
 </head>
 <body>
