@@ -166,6 +166,39 @@ body {
     margin: 0 0 10px 0;
     border-radius: 6px;
 }
+    /* --- 달력 및 포스터 크기 키우기 오버라이드 --- */
+
+/* 1. 달력 전체 최대 너비 제한 풀기 */
+.calendar {
+  max-width: 900px !important; /* 기존보다 가로를 훨씬 널찍하게 변경 */
+  width: 100% !important;
+}
+
+/* 2. 날짜 칸 세로 높이 키우기 */
+.calendar-body > div {
+  min-height: 150px !important; /* 각 날짜 칸의 세로 길이를 늘려서 포스터 공간 확보 */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  position: relative;
+  padding-bottom: 5px;
+}
+
+/* 3. 포스터 이미지 크기 키우고 꽉 채우기 */
+.calendar-poster {
+  width: 90% !important;
+  height: 110px !important; /* 세로 크기 대폭 확대 */
+  object-fit: cover !important; /* 이미지가 비율 깨지지 않고 칸에 꽉 차게 조절 */
+  border-radius: 6px !important;
+  margin-top: 4px !important;
+}
+
+/* 4. 날짜 숫자 위치 살짝 조정 */
+.dateNumber {
+  margin-bottom: 2px !important;
+  font-size: 14px !important;
+}
 </style>
 </head>
 <body>
