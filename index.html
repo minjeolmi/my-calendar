@@ -166,7 +166,7 @@ body {
     margin: 0 0 10px 0;
     border-radius: 6px;
 }
-/* --- 달력 칸 깨짐 방지 및 포스터 꽉 차게 맞추기 --- */
+/* --- 달력 칸과 포스터 유격 없이 칼각으로 맞추기 --- */
 
 /* 1. 달력 전체 폭 */
 .calendar {
@@ -174,31 +174,35 @@ body {
   width: 100% !important;
 }
 
-/* 2. 날짜 칸 세로 높이 고정 (절대 납작해지지 않음) */
+/* 2. 날짜 칸 자체에 비율을 줘서 가로 길이에 맞춰 세로가 자동 조절되도록 설정 (구겨짐 방지) */
 .calendar-body > div {
-  height: 135px !important; 
+  height: auto !important; 
+  min-height: unset !important;
+  aspect-ratio: 1 / 1.45 !important; /* 칸 자체를 포스터 서사형 비율로 고정 */
+  
   display: flex !important;
   flex-direction: column !important;
-  align-items: center !important;
   justify-content: flex-start !important;
+  align-items: center !important;
   position: relative !important;
-  padding: 4px !important;
+  padding: 6px 4px !important;
   box-sizing: border-box !important;
 }
 
-/* 3. 날짜 숫자 위치 */
+/* 3. 날짜 숫자 간격 조절 */
 .dateNumber {
   font-size: 12px !important;
   margin-bottom: 4px !important;
-  position: relative !important;
-  z-index: 2 !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important; /* 숫자가 공간 밀어내지 않게 고정 */
 }
 
-/* 4. 포스터를 남은 칸에 딱 맞춰서 꽉 채우기 */
+/* 4. 포스터가 날짜 아래 남는 공간을 여백 없이 꽉 채우도록 설정 */
 .calendar-poster {
-  width: calc(100% - 8px) !important;
-  height: calc(100% - 24px) !important; /* 날짜 아래 공간을 빈틈없이 채움 */
-  object-fit: cover !important; /* 비율 깨짐 없이 칸에 꽉 차게 조절 */
+  width: 100% !important;
+  flex: 1 !important; /* 숫자가 차지한 공간 외에 남은 세로를 전부 채움 */
+  min-height: 0 !important; /* flex 레이아웃 삐져나옴 방지 */
+  object-fit: cover !important; /* 비율 유지하면서 칸에 빈틈없이 꽉 채우기 */
   border-radius: 4px !important;
   margin: 0 !important;
 }
