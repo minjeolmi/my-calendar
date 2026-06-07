@@ -173,11 +173,22 @@ body {
 </body>
 
 <script>
-// 특정 날짜에 배치할 이미지 데이터 명세 (테스트용 샘플 데이터)
-const posterData = {
-  "2026-03-16": "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=300", 
-  "2026-03-18": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300"
-};
+// 실시간 노션 데이터를 담을 객체 (처음엔 빈 상태)
+let posterData = {};
+
+// Vercel 서버에서 데이터를 받아온 뒤 달력을 구동하는 함수
+async function initLiveCalendar() {
+  try {
+    // ⚠️ 여기에 복사한 젤미의 Vercel 주소를 넣고 뒤에 /api/movies 를 붙여주면 돼!
+    const response = await fetch('https://my-calendar-six-zeta.vercel.app/api/movies');
+    posterData = await response.json();
+  } catch (err) {
+    console.error("노션 데이터를 가져오는데 실패했어:", err);
+  }
+  
+  // 데이터 로드가 끝나면 달력 구동
+  CalendarControl();
+}
 
 function CalendarControl() {
   const calendar = new Date();
@@ -266,7 +277,7 @@ function CalendarControl() {
         document.querySelector(".calendar .calendar-body").innerHTML += `<div class="empty-dates"></div>`;
       }
 
-      // 진짜 날짜 채우기 로직 수정
+      // 진짜 날짜 채우기 로직
       while (count <= calendarDays) {
         let currentMonthNo = calendar.getMonth() + 1;
         let currentYear = calendar.getFullYear();
@@ -322,6 +333,7 @@ function CalendarControl() {
   calendarControl.init();
 }
 
-const calendarControl = new CalendarControl();
+// 실시간 연동 시작 함수 호출
+initLiveCalendar();
 </script>
 </html>
