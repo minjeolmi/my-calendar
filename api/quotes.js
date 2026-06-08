@@ -37,8 +37,33 @@ export default async function handler(req, res) {
 
     let titlePropName = Object.keys(selectedPage.properties).find(key => selectedPage.properties[key].type === 'title');
     const pageNumText = selectedPage.properties[titlePropName]?.title?.[0]?.plain_text || "";
-    const bookTitle = selectedPage.properties['책 제목']?.rich_text?.[0]?.plain_text || "";
-    const author = selectedPage.properties['글쓴이']?.rich_text?.[0]?.plain_text || "";
+
+    async function getNotionValue(prop) {
+      if (!prop) return "";
+      if (prop.type === 'rich_text') return prop.rich_text?.[0]?.plain_text || "";
+      if (prop.type === 'select') return prop.select?.name || "";
+      if (prop.type === 'relation') {
+        const relId = prop.relation?.[0]?.id;
+        if (!relId) return "";
+        try {
+          const res = await fetch(`https://api.notion.com/v1/pages/${relId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Notion-Version': '2022-06-28'
+            }
+          });
+          const pageData = await res.json();
+          const titleKey = Object.keys(pageData.properties).find(key => pageData.properties[key].type === 'title');
+          return pageData.properties[titleKey]?.title?.[0]?.plain_text || "";
+        } catch (e) {
+          return "";
+        }
+      }
+      return "";
+    }
+
+    const bookTitle = await getNotionValue(selectedPage.properties['책 제목']);
 
     const blockResponse = await fetch(`https://api.notion.com/v1/blocks/${selectedPage.id}/children?page_size=100`, {
       method: 'GET',
@@ -53,15 +78,9 @@ export default async function handler(req, res) {
     if (blockData.results) {
       quoteText = blockData.results
         .map(block => {
-          if (block.type === 'paragraph') {
-            return block.paragraph.rich_text.map(t => t.plain_text).join('');
-          }
-          if (block.type === 'quote') {
-            return block.quote.rich_text.map(t => t.plain_text).join('');
-          }
-          if (block.type === 'callout') {
-            return block.callout.rich_text.map(t => t.plain_text).join('');
-          }
+          if (block.type === 'paragraph') return block.paragraph.rich_text.map(t => t.plain_text).join('');
+          if (block.type === 'quote') return block.quote.rich_text.map(t => t.plain_text).join('');
+          if (block.type === 'callout') return block.callout.rich_text.map(t => t.plain_text).join('');
           return null;
         })
         .filter(text => text !== null && text.trim() !== "")
@@ -73,8 +92,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       quote: quoteText,
       page: pageNumText,
-      book: bookTitle,
-      author: author
+      book: bookTitle
     });
 
   } catch (err) {
