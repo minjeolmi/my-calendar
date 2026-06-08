@@ -91,7 +91,7 @@
       }
     }
     loadDailyQuote();
+console.log("redeploy");
   </script>
 </body>
 </html>
-'.'
