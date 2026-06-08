@@ -1,84 +1,96 @@
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  if (req.method === 'OPTIONS') return res.status(200).end();
-
-  const token = process.env.NOTION_API_KEY;
-  const databaseId = process.env.NOTION_QUOTES_DATABASE_ID;
-
-  try {
-    const dbResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json'
-      }
-    });
-    const dbData = await dbResponse.json();
-
-    if (dbData.object === 'error') {
-      return res.status(dbData.status).json({ error: dbData.message });
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Quotes Widget</title>
+  <style>
+    /* --- 기본 스타일 (라이트 모드 기준) --- */
+    body {
+      background-color: #ffffff; /* 노션 라이트모드 배경색 */
+      color: #37352f; /* 노션 라이트모드 기본 글자색 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 24px;
+      box-sizing: border-box;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
-
-    const pages = dbData.results;
-    if (!pages || pages.length === 0) {
-      return res.status(200).json({ quote: "등록된 구절이 없습니다.", page: "", book: "" });
-    }
-
-    const now = new Date();
-    const kstDateStr = new Date(now.getTime() + (9 * 60 * 60 * 1000)).toISOString().slice(0, 10); 
+    body::-webkit-scrollbar { display: none; }
     
-    let hash = 0;
-    for (let i = 0; i < kstDateStr.length; i++) {
-      hash = kstDateStr.charCodeAt(i) + ((hash << 5) - hash);
+    .quote-container {
+      max-width: 650px;
+      width: 100%;
+      text-align: left;
+      border-left: 3px solid #e3e2e0; /* 노션 라이트모드 회색 인용선 */
+      padding-left: 20px;
+      box-sizing: border-box;
     }
-    const index = Math.abs(hash) % pages.length;
-    const selectedPage = pages[index];
+    .quote-text {
+      font-size: 15px;
+      line-height: 1.65;
+      margin-bottom: 14px;
+      white-space: pre-wrap;
+      color: #37352f;
+      letter-spacing: -0.01em;
+    }
+    .quote-info {
+      font-size: 13px;
+      color: #787774; /* 노션 라이트모드 옅은 폰트색 */
+      font-weight: 500;
+    }
 
-    let titlePropName = Object.keys(selectedPage.properties).find(key => selectedPage.properties[key].type === 'title');
-    const pageNumText = selectedPage.properties[titlePropName]?.title?.[0]?.plain_text || "";
-    const bookTitle = selectedPage.properties['책 제목']?.rich_text?.[0]?.plain_text || "";
-    const author = selectedPage.properties['글쓴이']?.rich_text?.[0]?.plain_text || "";
-
-    const blockResponse = await fetch(`https://api.notion.com/v1/blocks/${selectedPage.id}/children?page_size=100`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28'
+    /* --- 컴퓨터/폰 시스템 설정이 다크 모드일 때 자동으로 전환 --- */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #191919; /* 노션 다크모드 배경색 */
       }
-    });
-    const blockData = await blockResponse.json();
-    
-    let quoteText = "";
-    if (blockData.results) {
-      quoteText = blockData.results
-        .map(block => {
-          // 일반 문단, 인용구, 콜아웃 블록 텍스트 전부 대응하도록 수정
-          if (block.type === 'paragraph') {
-            return block.paragraph.rich_text.map(t => t.plain_text).join('');
-          }
-          if (block.type === 'quote') {
-            return block.quote.rich_text.map(t => t.plain_text).join('');
-          }
-          if (block.type === 'callout') {
-            return block.callout.rich_text.map(t => t.plain_text).join('');
-          }
-          return null;
-        })
-        .filter(text => text !== null && text.trim() !== "")
-        .join('\n\n');
+      .quote-container {
+        border-left: 3px solid #444444; /* 다크모드 인용선 */
+      }
+      .quote-text {
+        color: #e3e3e3; /* 다크모드 글자색 */
+      }
+      .quote-info {
+        color: #757575;
+      }
     }
+  </style>
+</head>
+<body>
+  <div class="quote-container">
+    <div class="quote-text" id="quote">오늘의 문장을 가져오는 중...</div>
+    <div class="quote-info" id="info"></div>
+  </div>
 
-    if (!quoteText) quoteText = "본문 내용이 비어있는 페이지입니다.";
-
-    return res.status(200).json({
-      quote: quoteText,
-      page: pageNumText,
-      book: bookTitle,
-      author: author
-    });
-
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
+  <script>
+    async function loadDailyQuote() {
+      try {
+        const response = await fetch('https://my-calendar-six-zeta.vercel.app/api/quotes');
+        const data = await response.json();
+        
+        if (data.error) {
+          document.getElementById('quote').innerText = "데이터 로드 실패: " + data.error;
+          return;
+        }
+        
+        document.getElementById('quote').innerText = data.quote;
+        
+        let infoStr = "";
+        if (data.book) infoStr += ` - ${data.book}`;
+        if (data.page) infoStr += ` (${data.page})`;
+        if (data.author) infoStr += ` , ${data.author}`;
+        
+        document.getElementById('info').innerText = infoStr;
+      } catch (err) {
+        document.getElementById('quote').innerText = "서버와 연결할 수 없습니다.";
+      }
+    }
+    loadDailyQuote();
+  </script>
+</body>
+</html>
