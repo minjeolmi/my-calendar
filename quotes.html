@@ -5,20 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notion Quotes Widget</title>
   <style>
-    body {
+    /* --- 기본 스타일 (라이트 모드 기준) --- */
+    html, body {
       background-color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      box-sizing: border-box;
+      /* html과 body 모두에서 스크롤바 흔적 지우기 */
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
+
+    body {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      min-height: 100vh;
       padding: 12px;
-      box-sizing: border-box;
-      -ms-overflow-style: none;
-      scrollbar-width: none;
     }
-    body::-webkit-scrollbar { display: none; }
     
     .quote-card {
       max-width: 650px;
@@ -30,7 +37,7 @@
       box-sizing: border-box;
       text-align: left;
       box-shadow: rgba(15, 15, 15, 0.04) 0px 1px 4px;
-      position: relative; /* 버튼 배치를 위한 기준점 */
+      position: relative;
     }
     
     .quote-text {
@@ -42,7 +49,6 @@
       letter-spacing: -0.01em;
     }
     
-    /* 하단 정보와 버튼을 한 줄에 배치 */
     .card-footer {
       display: flex;
       justify-content: space-between;
@@ -55,7 +61,6 @@
       font-weight: 500;
     }
 
-    /* 비밀 새로고침 버튼 스타일 */
     .refresh-btn {
       background: none;
       border: none;
@@ -64,12 +69,11 @@
       cursor: pointer;
       padding: 4px;
       border-radius: 4px;
-      opacity: 0; /* 평소에는 투명하게 숨김 */
+      opacity: 0;
       transition: opacity 0.2s ease, background-color 0.2s ease;
       line-height: 1;
     }
     
-    /* 마우스를 카드 위에 올렸을 때만 슬쩍 보이게 설정 */
     .quote-card:hover .refresh-btn {
       opacity: 1;
     }
@@ -80,7 +84,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      body {
+      html, body {
         background-color: #191919;
       }
       .quote-card {
@@ -113,10 +117,9 @@
     </div>
   </div>
 
-  <script>
+  <script {nonce}>
     async function loadQuote(isRandom = false) {
       try {
-        // 랜덤 요청일 때는 브라우저 캐시를 무시하도록 타임스탬프를 주소 뒤에 붙여줌
         const url = isRandom 
           ? 'https://my-calendar-six-zeta.vercel.app/api/quotes?random=true&t=' + Date.now()
           : 'https://my-calendar-six-zeta.vercel.app/api/quotes';
@@ -140,8 +143,6 @@
         document.getElementById('quote').innerText = "서버와 연결할 수 없습니다.";
       }
     }
-    
-    // 첫 로딩은 무조건 하루 한 번 고정 모드로 실행
     loadQuote(false);
   </script>
 </body>
