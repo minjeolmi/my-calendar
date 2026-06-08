@@ -25,14 +25,21 @@ export default async function handler(req, res) {
       return res.status(200).json({ quote: "등록된 구절이 없습니다.", page: "", book: "" });
     }
 
-    const now = new Date();
-    const kstDateStr = new Date(now.getTime() + (9 * 60 * 60 * 1000)).toISOString().slice(0, 10); 
-    
-    let hash = 0;
-    for (let i = 0; i < kstDateStr.length; i++) {
-      hash = kstDateStr.charCodeAt(i) + ((hash << 5) - hash);
+    let index;
+    // 비밀 버튼을 눌러서 ?random=true 신호가 오면 무작위 추출, 아니면 원래대로 하루 한 번 고정
+    if (req.query.random === 'true') {
+      index = Math.floor(Math.random() * pages.length);
+    } else {
+      const now = new Date();
+      const kstDateStr = new Date(now.getTime() + (9 * 60 * 60 * 1000)).toISOString().slice(0, 10); 
+      
+      let hash = 0;
+      for (let i = 0; i < kstDateStr.length; i++) {
+        hash = kstDateStr.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      index = Math.abs(hash) % pages.length;
     }
-    const index = Math.abs(hash) % pages.length;
+
     const selectedPage = pages[index];
 
     let titlePropName = Object.keys(selectedPage.properties).find(key => selectedPage.properties[key].type === 'title');
