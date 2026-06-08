@@ -30,6 +30,7 @@
       box-sizing: border-box;
       text-align: left;
       box-shadow: rgba(15, 15, 15, 0.04) 0px 1px 4px;
+      position: relative; /* 버튼 배치를 위한 기준점 */
     }
     
     .quote-text {
@@ -40,10 +41,42 @@
       color: #37352f;
       letter-spacing: -0.01em;
     }
+    
+    /* 하단 정보와 버튼을 한 줄에 배치 */
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
     .quote-info {
       font-size: 13px;
       color: #787774;
       font-weight: 500;
+    }
+
+    /* 비밀 새로고침 버튼 스타일 */
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: #b3b2b0;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      opacity: 0; /* 평소에는 투명하게 숨김 */
+      transition: opacity 0.2s ease, background-color 0.2s ease;
+      line-height: 1;
+    }
+    
+    /* 마우스를 카드 위에 올렸을 때만 슬쩍 보이게 설정 */
+    .quote-card:hover .refresh-btn {
+      opacity: 1;
+    }
+    
+    .refresh-btn:hover {
+      background-color: #f1f1ef;
+      color: #37352f;
     }
 
     @media (prefers-color-scheme: dark) {
@@ -61,19 +94,34 @@
       .quote-info {
         color: #757575;
       }
+      .refresh-btn {
+        color: #555555;
+      }
+      .refresh-btn:hover {
+        background-color: #2d2d2d;
+        color: #e3e3e3;
+      }
     }
   </style>
 </head>
 <body>
   <div class="quote-card">
     <div class="quote-text" id="quote">오늘의 문장을 가져오는 중...</div>
-    <div class="quote-info" id="info"></div>
+    <div class="card-footer">
+      <div class="quote-info" id="info"></div>
+      <button class="refresh-btn" id="refreshBtn" onclick="loadQuote(true)" title="다른 문장 넘겨보기">↻</button>
+    </div>
   </div>
 
   <script>
-    async function loadDailyQuote() {
+    async function loadQuote(isRandom = false) {
       try {
-        const response = await fetch('https://my-calendar-six-zeta.vercel.app/api/quotes');
+        // 랜덤 요청일 때는 브라우저 캐시를 무시하도록 타임스탬프를 주소 뒤에 붙여줌
+        const url = isRandom 
+          ? 'https://my-calendar-six-zeta.vercel.app/api/quotes?random=true&t=' + Date.now()
+          : 'https://my-calendar-six-zeta.vercel.app/api/quotes';
+          
+        const response = await fetch(url);
         const data = await response.json();
         
         if (data.error) {
@@ -83,7 +131,6 @@
         
         document.getElementById('quote').innerText = data.quote;
         
-        // 책 제목과 페이지 정보만 깔끔하게 조합 (예: 월든 · p.142)
         let infoParts = [];
         if (data.book) infoParts.push(data.book);
         if (data.page) infoParts.push(data.page);
@@ -93,7 +140,9 @@
         document.getElementById('quote').innerText = "서버와 연결할 수 없습니다.";
       }
     }
-    loadDailyQuote();
+    
+    // 첫 로딩은 무조건 하루 한 번 고정 모드로 실행
+    loadQuote(false);
   </script>
 </body>
 </html>
